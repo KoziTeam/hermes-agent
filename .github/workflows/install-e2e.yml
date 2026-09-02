@@ -64,14 +64,19 @@ jobs:
       tags: ${{ steps.pick.outputs.tags }}
     steps:
       # This job only reads tag names and runs one script, so take the cheap
-      # checkout: no blobs (filter), no other files (sparse), but DO fetch tags
-      # -- they are the whole input, and the default shallow checkout has none.
+      # checkout: no blobs (filter), no other files (sparse). This fork does
+      # not mirror upstream release tags, so fetching its own tags would leave
+      # the matrix empty even though those are the versions real users install.
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           filter: blob:none
-          fetch-tags: true
           sparse-checkout: scripts/sandbox/pick-release-tags.sh
           sparse-checkout-cone-mode: false
+      - name: Fetch canonical release tags
+        run: |
+          set -euo pipefail
+          git fetch --force --no-tags https://github.com/NousResearch/hermes-agent.git \
+            '+refs/tags/v*:refs/tags/v*'
       - id: pick
         run: |
           set -euo pipefail
